@@ -29,9 +29,8 @@ func setStatusIcon(text string) {
 	switch runtime.GOOS {
 	case "darwin":
 		// SetTitle es texto real de la barra de menús en Mac (nítido, no
-		// atado al tamaño de un ícono bitmap chico); el ícono queda de
-		// respaldo/complemento.
-		systray.SetTemplateIcon(renderTemplateIcon(text), renderIcon(text))
+		// atado al tamaño de un ícono bitmap chico). Sin ícono: ponerlo
+		// además del título duplicaba el monto en la barra.
 		systray.SetTitle(text)
 	case "linux":
 		// El ícono de bandeja en Linux (app-indicator) queda chico sin
