@@ -50,6 +50,21 @@ abrirlo.
 y corrélo. Necesita un panel con soporte de bandeja/appindicator (XFCE, la
 mayoría de los entornos de escritorio lo tienen).
 
+### Autostart en Linux (XFCE)
+
+Para que arranque sola en cada inicio de sesión (si no, cualquier logout o
+reinicio la mata y se queda mostrando datos viejos hasta que alguien la
+abre a mano):
+
+1. Copiá [`melinicho-tray.desktop`](melinicho-tray.desktop) a
+   `~/.config/autostart/melinicho-tray.desktop`
+2. Editá la línea `Exec=` con la ruta real al binario en tu máquina
+
+```bash
+cp melinicho-tray.desktop ~/.config/autostart/
+sed -i "s#/home/TU_USUARIO#$HOME#" ~/.config/autostart/melinicho-tray.desktop
+```
+
 ## Configuración
 
 La primera vez que corre, crea un archivo de configuración vacío en:
