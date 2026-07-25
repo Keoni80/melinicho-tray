@@ -43,9 +43,9 @@ func formatCompact(amount float64) string {
 // oscuras — no hay forma portable de saber el tema del panel en Linux/Windows).
 // El ancho del ícono se ajusta al largo del texto.
 func renderIcon(text string) []byte {
-	const height = 44
-	const fontSize = 30
-	const padding = 6
+	const height = 64
+	const fontSize = 46
+	const padding = 10
 
 	face := truetype.NewFace(parsedFont, &truetype.Options{
 		Size:    fontSize,
@@ -110,9 +110,9 @@ func renderIcon(text string) []byte {
 // tema claro/oscuro de la barra de menús — un contorno blanco fijo se vería
 // mal ahí, así que esta versión no lo lleva.
 func renderTemplateIcon(text string) []byte {
-	const height = 44
-	const fontSize = 30
-	const padding = 6
+	const height = 64
+	const fontSize = 46
+	const padding = 10
 
 	face := truetype.NewFace(parsedFont, &truetype.Options{Size: fontSize, DPI: 72})
 	defer face.Close()
