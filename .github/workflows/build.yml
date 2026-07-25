@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch: {}
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Instalar dependencias de GTK/appindicator
+        run: sudo apt-get update && sudo apt-get install -y libgtk-3-dev libayatana-appindicator3-dev
+      - name: Compilar
+        run: |
+          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o melinicho-tray-linux-amd64 .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: melinicho-tray-linux-amd64
+          path: melinicho-tray-linux-amd64
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Instalar MinGW (gcc, hace falta para CGO)
+        uses: egor-tensin/setup-mingw@v2
+        with:
+          platform: x64
+      - name: Compilar
+        shell: bash
+        run: |
+          CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build -ldflags "-H=windowsgui" -o melinicho-tray-windows-amd64.exe .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: melinicho-tray-windows-amd64
+          path: melinicho-tray-windows-amd64.exe
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Compilar (arm64 — Apple Silicon)
+        run: |
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -o melinicho-tray-darwin-arm64 .
+      - name: Compilar (amd64 — Intel)
+        run: |
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o melinicho-tray-darwin-amd64 .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: melinicho-tray-darwin-arm64
+          path: melinicho-tray-darwin-arm64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: melinicho-tray-darwin-amd64
+          path: melinicho-tray-darwin-amd64
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [linux, windows, macos]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
