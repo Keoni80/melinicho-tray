@@ -22,8 +22,28 @@ func main() {
 	systray.Run(onReady, onExit)
 }
 
+// setStatusIcon actualiza lo que se ve en la bandeja/barra de menús. En Mac
+// y Linux el texto real va en SetTitle (nítido, no atado al tamaño de un
+// ícono bitmap chico); en Windows no existe esa opción, así que ahí el
+// texto se dibuja sobre el propio ícono.
+func setStatusIcon(text string) {
+	if runtime.GOOS == "darwin" {
+		// SetTitle es texto real de la barra de menús en Mac (nítido, no
+		// atado al tamaño de un ícono bitmap chico); el ícono queda de
+		// respaldo/complemento.
+		systray.SetTemplateIcon(renderTemplateIcon(text), renderIcon(text))
+		systray.SetTitle(text)
+		return
+	}
+	// Linux y Windows: SetTitle no muestra nada en el panel de XFCE
+	// probado (el plugin de bandeja no soporta el "label" de app-indicator,
+	// solo el ícono) y no existe en Windows — en ambos el texto va dibujado
+	// sobre el propio ícono bitmap.
+	systray.SetIcon(renderIcon(text))
+}
+
 func onReady() {
-	systray.SetIcon(renderIcon("..."))
+	setStatusIcon("...")
 	systray.SetTooltip("MeLi Nicho — cargando...")
 
 	loaded, needsSetup, err := loadConfig()
@@ -91,11 +111,7 @@ func refresh() {
 	}
 
 	text := formatCompact(summary.Today.Amount)
-	systray.SetIcon(renderIcon(text))
-	if runtime.GOOS == "darwin" {
-		systray.SetTemplateIcon(renderTemplateIcon(text), renderIcon(text))
-		systray.SetTitle(text)
-	}
+	setStatusIcon(text)
 
 	tooltip := fmt.Sprintf(
 		"Hoy: $%.0f (%d órdenes)\nMes: $%.0f (%d órdenes)\nActualizado %s",
@@ -111,7 +127,7 @@ func refresh() {
 
 func showError(err error) {
 	log.Printf("error consultando melinicho: %v", err)
-	systray.SetIcon(renderIcon("!"))
+	setStatusIcon("!")
 	systray.SetTooltip("Error consultando MeLi Nicho: " + err.Error())
 	if menuStatus != nil {
 		menuStatus.SetTitle("⚠ Error: " + err.Error())
@@ -120,7 +136,7 @@ func showError(err error) {
 
 func showConfigNeeded() {
 	path, _ := configPath()
-	systray.SetIcon(renderIcon("CFG"))
+	setStatusIcon("CFG")
 	systray.SetTooltip("Falta configurar usuario/contraseña — abrí la carpeta de configuración desde el menú")
 	if menuStatus != nil {
 		menuStatus.SetTitle("⚠ Configurá usuario/contraseña")
