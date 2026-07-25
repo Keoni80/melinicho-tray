@@ -5,12 +5,35 @@ hoy de [MeLi Nicho](https://melinicho.up.railway.app) y las actualiza sola
 cada tanto (intervalo configurable).
 
 - **macOS**: el monto aparece como texto en la barra de menús (nativo).
-- **Linux/Windows**: el monto se dibuja como un ícono chico en la bandeja —
-  no hay forma nativa de mostrar texto ancho en esas plataformas, así que es
-  más apretado que en Mac.
+- **Windows**: el monto se dibuja como un ícono chico en la bandeja — no hay
+  forma nativa de mostrar texto ancho ahí, así que se lee apretado.
+- **Linux**: mismo problema que Windows con el ícono de bandeja (los íconos
+  de app-indicator quedan chicos sin importar la resolución con la que se
+  generen — es una limitación del plugin de bandeja del panel, no de la
+  app). Para verlo grande y legible, la app también escribe el monto a
+  `~/.config/melinicho-tray/genmon.txt` en el formato que espera el plugin
+  **Generic Monitor** de XFCE — ver "Verlo grande en Linux (XFCE)" abajo.
 
 Al pasar el mouse por el ícono (o abrir el menú) se ve también la
 facturación del mes y la hora de la última actualización.
+
+## Verlo grande en Linux (XFCE)
+
+El ícono de la bandeja va a quedar chico sin importar qué se haga (ver
+arriba). La alternativa es agregar un widget **Generic Monitor** al panel,
+que sí muestra texto libre a cualquier tamaño:
+
+1. Instalá el plugin si no lo tenés: `sudo apt install xfce4-genmon-plugin`
+2. Clic derecho en el panel → Panel → Agregar nuevos elementos → **Generic
+   Monitor** → Agregar
+3. Clic derecho en el widget nuevo → Propiedades:
+   - **Comando**: `cat /home/TU_USUARIO/.config/melinicho-tray/genmon.txt`
+     (ajustá la ruta a tu usuario/SO)
+   - **Período**: 15 segundos
+   - Desmarcá "Usar etiqueta" si aparece tildado
+
+El comando ya devuelve el texto con markup de Pango (`<txt>`) y el tooltip
+(`<tool>`) — no hace falta tocar nada más.
 
 ## Instalación
 

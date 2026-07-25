@@ -22,27 +22,32 @@ func main() {
 	systray.Run(onReady, onExit)
 }
 
-// setStatusIcon actualiza lo que se ve en la bandeja/barra de menús. En Mac
-// y Linux el texto real va en SetTitle (nítido, no atado al tamaño de un
-// ícono bitmap chico); en Windows no existe esa opción, así que ahí el
-// texto se dibuja sobre el propio ícono.
+var linuxDotIcon []byte // ícono fijo chico para Linux; se arma en onReady (no como var package-level: correría antes del init() que parsea la fuente en icon.go)
+
+// setStatusIcon actualiza lo que se ve en la bandeja/barra de menús.
 func setStatusIcon(text string) {
-	if runtime.GOOS == "darwin" {
+	switch runtime.GOOS {
+	case "darwin":
 		// SetTitle es texto real de la barra de menús en Mac (nítido, no
 		// atado al tamaño de un ícono bitmap chico); el ícono queda de
 		// respaldo/complemento.
 		systray.SetTemplateIcon(renderTemplateIcon(text), renderIcon(text))
 		systray.SetTitle(text)
-		return
+	case "linux":
+		// El ícono de bandeja en Linux (app-indicator) queda chico sin
+		// importar la resolución con la que se genere — es una limitación
+		// del plugin de bandeja del panel, no de esta app. El monto grande
+		// y legible se muestra aparte, vía writeGenmonStatus(), en un
+		// widget "Generic Monitor" del panel (texto real, no ícono). Acá
+		// alcanza con un ícono fijo chico como punto de entrada al menú.
+		systray.SetIcon(linuxDotIcon)
+	default: // windows: no hay SetTitle ni genmon, todo depende del ícono bitmap
+		systray.SetIcon(renderIcon(text))
 	}
-	// Linux y Windows: SetTitle no muestra nada en el panel de XFCE
-	// probado (el plugin de bandeja no soporta el "label" de app-indicator,
-	// solo el ícono) y no existe en Windows — en ambos el texto va dibujado
-	// sobre el propio ícono bitmap.
-	systray.SetIcon(renderIcon(text))
 }
 
 func onReady() {
+	linuxDotIcon = renderIcon("$")
 	setStatusIcon("...")
 	systray.SetTooltip("MeLi Nicho — cargando...")
 
@@ -120,6 +125,7 @@ func refresh() {
 		summary.AsOf,
 	)
 	systray.SetTooltip(tooltip)
+	writeGenmonStatus(text, tooltip)
 	if menuStatus != nil {
 		menuStatus.SetTitle(fmt.Sprintf("Hoy $%.0f · Mes $%.0f (act. %s)", summary.Today.Amount, summary.Month.Amount, summary.AsOf))
 	}
@@ -129,6 +135,7 @@ func showError(err error) {
 	log.Printf("error consultando melinicho: %v", err)
 	setStatusIcon("!")
 	systray.SetTooltip("Error consultando MeLi Nicho: " + err.Error())
+	writeGenmonStatus("Error", "Error consultando MeLi Nicho: "+err.Error())
 	if menuStatus != nil {
 		menuStatus.SetTitle("⚠ Error: " + err.Error())
 	}
@@ -138,6 +145,7 @@ func showConfigNeeded() {
 	path, _ := configPath()
 	setStatusIcon("CFG")
 	systray.SetTooltip("Falta configurar usuario/contraseña — abrí la carpeta de configuración desde el menú")
+	writeGenmonStatus("Config", "Falta configurar usuario/contraseña — abrí la carpeta de configuración desde el menú")
 	if menuStatus != nil {
 		menuStatus.SetTitle("⚠ Configurá usuario/contraseña")
 	}
