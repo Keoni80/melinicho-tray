@@ -25,12 +25,12 @@ func init() {
 }
 
 // formatCompact convierte un monto ARS en un string corto que entre en un
-// ícono de bandeja chico: 531496 -> "$531K", 1234567 -> "$1.2M".
+// ícono de bandeja chico: 531496 -> "$531K", 1234567 -> "$1.23M".
 func formatCompact(amount float64) string {
 	abs := math.Abs(amount)
 	switch {
 	case abs >= 1_000_000:
-		return fmt.Sprintf("$%.1fM", amount/1_000_000)
+		return fmt.Sprintf("$%.2fM", amount/1_000_000)
 	case abs >= 1_000:
 		return fmt.Sprintf("$%.0fK", amount/1_000)
 	default:
