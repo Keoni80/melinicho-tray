@@ -41,10 +41,14 @@ Descargá el binario de tu plataforma desde
 [Releases](https://github.com/Keoni80/melinicho-tray/releases) y ejecutalo.
 No hace falta instalar nada más.
 
-**macOS**: como el binario no está firmado por Apple, la primera vez
-Gatekeeper probablemente lo bloquee. Click derecho → Abrir (en vez de doble
-click), o corré `xattr -cr melinicho-tray-darwin-*` en una terminal antes de
-abrirlo.
+**macOS**: descargá `melinicho-tray-macos.dmg` (instalador — universal,
+sirve para Apple Silicon e Intel), montalo y arrastrá **MeLi Nicho
+Tray.app** a Applications. Como no está firmado por Apple, la primera vez
+Gatekeeper probablemente lo bloquee: click derecho sobre la app → Abrir (en
+vez de doble click). El binario suelto (`melinicho-tray-darwin-arm64`/`-amd64`)
+también sigue disponible en el release por si preferís no instalarlo — mismo
+workaround de Gatekeeper, o `xattr -cr melinicho-tray-darwin-*` en una
+terminal antes de abrirlo.
 
 **Linux**: dale permiso de ejecución (`chmod +x melinicho-tray-linux-amd64`)
 y corrélo. Necesita un panel con soporte de bandeja/appindicator (XFCE, la

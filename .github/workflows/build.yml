@@ -64,6 +64,47 @@ jobs:
         with:
           name: melinicho-tray-darwin-amd64
           path: melinicho-tray-darwin-amd64
+      - name: Armar .app universal (arm64+amd64) y .dmg
+        run: |
+          lipo -create -output melinicho-tray-universal melinicho-tray-darwin-arm64 melinicho-tray-darwin-amd64
+
+          APP="MeLi Nicho Tray.app"
+          mkdir -p "$APP/Contents/MacOS"
+          cp melinicho-tray-universal "$APP/Contents/MacOS/melinicho-tray"
+          chmod +x "$APP/Contents/MacOS/melinicho-tray"
+          cat > "$APP/Contents/Info.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleName</key>
+              <string>MeLi Nicho Tray</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.keoni80.melinicho-tray</string>
+              <key>CFBundleVersion</key>
+              <string>1.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundleExecutable</key>
+              <string>melinicho-tray</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSUIElement</key>
+              <true/>
+              <key>LSMinimumSystemVersion</key>
+              <string>11.0</string>
+          </dict>
+          </plist>
+          PLIST
+
+          mkdir dmg-src
+          cp -R "$APP" dmg-src/
+          ln -s /Applications dmg-src/Applications
+          hdiutil create -volname "MeLi Nicho Tray" -srcfolder dmg-src -ov -format UDZO melinicho-tray-macos.dmg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: melinicho-tray-macos-dmg
+          path: melinicho-tray-macos.dmg
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
