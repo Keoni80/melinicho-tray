@@ -65,6 +65,13 @@ cp melinicho-tray.desktop ~/.config/autostart/
 sed -i "s#/home/TU_USUARIO#$HOME#" ~/.config/autostart/melinicho-tray.desktop
 ```
 
+### Autostart en Windows
+
+Desde el menú de la bandeja, tildá **🚀 Inicio automático** — deja un
+`.bat` chiquito en tu carpeta Startup de Windows (`%AppData%\Microsoft\Windows\Start Menu\Programs\Startup`)
+que abre el `.exe` en cada inicio de sesión. Destildarlo lo saca de ahí.
+No hace falta tocar el Registro ni copiar nada a mano.
+
 ## Configuración
 
 La primera vez que corre, crea un archivo de configuración vacío en:

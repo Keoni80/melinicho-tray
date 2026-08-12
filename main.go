@@ -65,6 +65,13 @@ func onReady() {
 	mRefresh := systray.AddMenuItem("🔄 Actualizar ahora", "Consultar MeLi Nicho ahora")
 	mFolder := systray.AddMenuItem("⚙️ Abrir carpeta de configuración", "Editar server_url / usuario / contraseña / intervalo")
 	mReload := systray.AddMenuItem("🔁 Recargar configuración", "Releer config.json después de editarlo")
+	mAutostart := systray.AddMenuItemCheckbox("🚀 Inicio automático", "Iniciar MeLi Nicho Tray al iniciar sesión", isAutostartEnabled())
+	if !autostartSupported {
+		// Linux tiene su propio mecanismo (melinicho-tray.desktop, ver
+		// README) y macOS no lo pide todavía — no tiene sentido mostrar acá
+		// un toggle que siempre va a fallar.
+		mAutostart.Hide()
+	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("❌ Salir", "Cerrar MeLi Nicho Tray")
 
@@ -93,6 +100,8 @@ func onReady() {
 				openConfigFolder()
 			case <-mReload.ClickedCh:
 				reloadConfig()
+			case <-mAutostart.ClickedCh:
+				toggleAutostart(mAutostart)
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -102,6 +111,24 @@ func onReady() {
 }
 
 func onExit() {}
+
+func toggleAutostart(item *systray.MenuItem) {
+	var err error
+	if item.Checked() {
+		err = disableAutostart()
+		if err == nil {
+			item.Uncheck()
+		}
+	} else {
+		err = enableAutostart()
+		if err == nil {
+			item.Check()
+		}
+	}
+	if err != nil {
+		log.Printf("error al cambiar inicio automático: %v", err)
+	}
+}
 
 func refresh() {
 	mu.Lock()
