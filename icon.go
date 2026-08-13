@@ -10,6 +10,8 @@ import (
 	"image/png"
 	"math"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
@@ -24,6 +26,30 @@ func init() {
 		panic(err) // la fuente está embebida, si esto falla es un bug de build
 	}
 	parsedFont = f
+}
+
+// formatThousands da formato "es-AR" a un monto entero: separador de miles
+// con punto, sin decimales (14223727 -> "14.223.727") — para tooltip,
+// overlay y menú, donde sí entra el número completo (a diferencia del
+// ícono de bandeja, que usa formatCompact()).
+func formatThousands(amount float64) string {
+	n := int64(math.Round(amount))
+	neg := n < 0
+	if neg {
+		n = -n
+	}
+	s := strconv.FormatInt(n, 10)
+	var parts []string
+	for len(s) > 3 {
+		parts = append([]string{s[len(s)-3:]}, parts...)
+		s = s[:len(s)-3]
+	}
+	parts = append([]string{s}, parts...)
+	out := strings.Join(parts, ".")
+	if neg {
+		out = "-" + out
+	}
+	return out
 }
 
 // formatCompact convierte un monto ARS en un string corto que entre en un

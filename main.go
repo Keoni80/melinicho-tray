@@ -216,19 +216,19 @@ func refresh() {
 	setStatusIcon(text)
 
 	tooltip := fmt.Sprintf(
-		"Hoy: $%.0f (%d órdenes)\nMes: $%.0f (%d órdenes)\nActualizado %s",
-		summary.Today.Amount, summary.Today.Orders,
-		summary.Month.Amount, summary.Month.Orders,
+		"Hoy: $%s (%d órdenes)\nMes: $%s (%d órdenes)\nActualizado %s",
+		formatThousands(summary.Today.Amount), summary.Today.Orders,
+		formatThousands(summary.Month.Amount), summary.Month.Orders,
 		summary.AsOf,
 	)
 	systray.SetTooltip(tooltip)
 	writeGenmonStatus(text, tooltip)
 	updateOverlayText(
-		fmt.Sprintf("Hoy: $%.0f", summary.Today.Amount),
-		fmt.Sprintf("Mes: $%.0f · act. %s", summary.Month.Amount, summary.AsOf),
+		fmt.Sprintf("Hoy: $%s", formatThousands(summary.Today.Amount)),
+		fmt.Sprintf("Mes: $%s · act. %s", formatThousands(summary.Month.Amount), summary.AsOf),
 	)
 	if menuStatus != nil {
-		menuStatus.SetTitle(fmt.Sprintf("Hoy $%.0f · Mes $%.0f (act. %s)", summary.Today.Amount, summary.Month.Amount, summary.AsOf))
+		menuStatus.SetTitle(fmt.Sprintf("Hoy $%s · Mes $%s (act. %s)", formatThousands(summary.Today.Amount), formatThousands(summary.Month.Amount), summary.AsOf))
 	}
 }
 
