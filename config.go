@@ -12,6 +12,17 @@ type Config struct {
 	Username        string `json:"username"`
 	Password        string `json:"password"`
 	IntervalSeconds int    `json:"interval_seconds"`
+	// ShowOverlay es puntero para distinguir "no estaba en el config.json"
+	// (nil -> default true) de "el usuario lo puso en false" — un bool
+	// simple no podría distinguir esos dos casos al leer un config.json
+	// viejo de antes de que existiera este campo.
+	ShowOverlay *bool `json:"show_overlay,omitempty"`
+	OverlayX    int   `json:"overlay_x"`
+	OverlayY    int   `json:"overlay_y"`
+}
+
+func (c *Config) showOverlay() bool {
+	return c.ShowOverlay == nil || *c.ShowOverlay
 }
 
 const defaultServerURL = "https://melinicho.up.railway.app"

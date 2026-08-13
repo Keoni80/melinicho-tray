@@ -59,6 +59,8 @@ func onReady() {
 	client = newClient(cfg)
 	mu.Unlock()
 
+	startOverlay()
+
 	menuStatus = systray.AddMenuItem("Cargando…", "")
 	menuStatus.Disable()
 	systray.AddSeparator()
@@ -71,6 +73,10 @@ func onReady() {
 		// README) y macOS no lo pide todavía — no tiene sentido mostrar acá
 		// un toggle que siempre va a fallar.
 		mAutostart.Hide()
+	}
+	mOverlay := systray.AddMenuItemCheckbox("🖥️ Overlay en pantalla", "Mostrar/ocultar la ventanita flotante con el monto de hoy", cfg.showOverlay())
+	if !overlaySupported {
+		mOverlay.Hide()
 	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("❌ Salir", "Cerrar MeLi Nicho Tray")
@@ -102,6 +108,8 @@ func onReady() {
 				reloadConfig()
 			case <-mAutostart.ClickedCh:
 				toggleAutostart(mAutostart)
+			case <-mOverlay.ClickedCh:
+				toggleOverlay(mOverlay)
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -130,6 +138,25 @@ func toggleAutostart(item *systray.MenuItem) {
 	}
 }
 
+func toggleOverlay(item *systray.MenuItem) {
+	mu.Lock()
+	show := !cfg.showOverlay()
+	cfg.ShowOverlay = &show
+	err := saveConfig(cfg)
+	mu.Unlock()
+	if err != nil {
+		log.Printf("error guardando preferencia de overlay: %v", err)
+		return
+	}
+	if show {
+		item.Check()
+		showOverlayWindow()
+	} else {
+		item.Uncheck()
+		hideOverlayWindow()
+	}
+}
+
 func refresh() {
 	mu.Lock()
 	c := client
@@ -152,6 +179,10 @@ func refresh() {
 	)
 	systray.SetTooltip(tooltip)
 	writeGenmonStatus(text, tooltip)
+	updateOverlayText(
+		fmt.Sprintf("Hoy: $%.0f", summary.Today.Amount),
+		fmt.Sprintf("Mes: $%.0f · act. %s", summary.Month.Amount, summary.AsOf),
+	)
 	if menuStatus != nil {
 		menuStatus.SetTitle(fmt.Sprintf("Hoy $%.0f · Mes $%.0f (act. %s)", summary.Today.Amount, summary.Month.Amount, summary.AsOf))
 	}
@@ -162,6 +193,7 @@ func showError(err error) {
 	setStatusIcon("!")
 	systray.SetTooltip("Error consultando MeLi Nicho: " + err.Error())
 	writeGenmonStatus("Error", "Error consultando MeLi Nicho: "+err.Error())
+	updateOverlayText("⚠ Error", err.Error())
 	if menuStatus != nil {
 		menuStatus.SetTitle("⚠ Error: " + err.Error())
 	}
@@ -172,6 +204,7 @@ func showConfigNeeded() {
 	setStatusIcon("CFG")
 	systray.SetTooltip("Falta configurar usuario/contraseña — abrí la carpeta de configuración desde el menú")
 	writeGenmonStatus("Config", "Falta configurar usuario/contraseña — abrí la carpeta de configuración desde el menú")
+	updateOverlayText("⚙ Configurá", "usuario/contraseña en el menú")
 	if menuStatus != nil {
 		menuStatus.SetTitle("⚠ Configurá usuario/contraseña")
 	}

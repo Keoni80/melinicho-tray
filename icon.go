@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
 	"math"
+	"runtime"
 
 	"github.com/golang/freetype"
 	"github.com/golang/freetype/truetype"
@@ -102,6 +104,48 @@ func renderIcon(text string) []byte {
 	if err := png.Encode(&buf, img); err != nil {
 		return nil
 	}
+	pngBytes := buf.Bytes()
+	if runtime.GOOS == "windows" {
+		// systray.SetIcon en Windows carga el archivo con LoadImage(...,
+		// IMAGE_ICON, ..., LR_LOADFROMFILE), que solo entiende el contenedor
+		// .ico — un PNG suelto falla en silencio (LoadImage devuelve NULL) y
+		// el ícono nunca aparece en la bandeja. Envolver el PNG en un .ico
+		// mínimo (formato "PNG icon", soportado desde Windows Vista) alcanza,
+		// sin necesidad de reimplementar un encoder BMP.
+		return wrapICO(pngBytes, width, height)
+	}
+	return pngBytes
+}
+
+// wrapICO envuelve una imagen PNG en un contenedor .ico de un solo frame.
+func wrapICO(pngBytes []byte, width, height int) []byte {
+	var buf bytes.Buffer
+
+	bWidth := byte(width)
+	if width >= 256 {
+		bWidth = 0 // 0 significa 256 en el formato ICO
+	}
+	bHeight := byte(height)
+	if height >= 256 {
+		bHeight = 0
+	}
+
+	// ICONDIR (6 bytes)
+	binary.Write(&buf, binary.LittleEndian, uint16(0)) // reservado
+	binary.Write(&buf, binary.LittleEndian, uint16(1)) // tipo: ícono
+	binary.Write(&buf, binary.LittleEndian, uint16(1)) // 1 imagen
+
+	// ICONDIRENTRY (16 bytes)
+	buf.WriteByte(bWidth)
+	buf.WriteByte(bHeight)
+	buf.WriteByte(0)                                                // sin paleta
+	buf.WriteByte(0)                                                // reservado
+	binary.Write(&buf, binary.LittleEndian, uint16(1))              // planes
+	binary.Write(&buf, binary.LittleEndian, uint16(32))             // bits por píxel
+	binary.Write(&buf, binary.LittleEndian, uint32(len(pngBytes)))  // tamaño de la imagen
+	binary.Write(&buf, binary.LittleEndian, uint32(6+16))           // offset: ICONDIR + 1 ICONDIRENTRY
+
+	buf.Write(pngBytes)
 	return buf.Bytes()
 }
 
