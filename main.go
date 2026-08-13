@@ -78,6 +78,12 @@ func onReady() {
 	if !overlaySupported {
 		mOverlay.Hide()
 	}
+	mInterval := systray.AddMenuItem("⏱️ Frecuencia de actualización", "Cambiar cada cuántos segundos se consulta el valor de ventas")
+	if !intervalConfigSupported {
+		// Sin diálogo nativo en Linux/macOS todavía — se sigue editando
+		// interval_seconds a mano en config.json (ver README).
+		mInterval.Hide()
+	}
 	systray.AddSeparator()
 	mQuit := systray.AddMenuItem("❌ Salir", "Cerrar MeLi Nicho Tray")
 
@@ -87,12 +93,23 @@ func onReady() {
 		go refresh()
 	}
 
+	intervalChanged := make(chan struct{}, 1)
+
 	go func() {
 		for {
 			mu.Lock()
 			interval := cfg.IntervalSeconds
 			mu.Unlock()
-			time.Sleep(time.Duration(interval) * time.Second)
+			timer := time.NewTimer(time.Duration(interval) * time.Second)
+			select {
+			case <-timer.C:
+			case <-intervalChanged:
+				// Cambiaron el intervalo desde el menú mientras esperaba con
+				// el viejo (posiblemente mucho más largo) — cortar la espera
+				// acá en vez de dejar que termine, si no el cambio recién se
+				// notaría después de agotar la espera vieja.
+				timer.Stop()
+			}
 			refresh()
 		}
 	}()
@@ -110,6 +127,8 @@ func onReady() {
 				toggleAutostart(mAutostart)
 			case <-mOverlay.ClickedCh:
 				toggleOverlay(mOverlay)
+			case <-mInterval.ClickedCh:
+				changeInterval(intervalChanged)
 			case <-mQuit.ClickedCh:
 				systray.Quit()
 				return
@@ -154,6 +173,31 @@ func toggleOverlay(item *systray.MenuItem) {
 	} else {
 		item.Uncheck()
 		hideOverlayWindow()
+	}
+}
+
+func changeInterval(notify chan struct{}) {
+	mu.Lock()
+	current := cfg.IntervalSeconds
+	mu.Unlock()
+
+	newVal, ok := promptIntervalSeconds(current)
+	if !ok {
+		return
+	}
+
+	mu.Lock()
+	cfg.IntervalSeconds = newVal
+	err := saveConfig(cfg)
+	mu.Unlock()
+	if err != nil {
+		log.Printf("error guardando intervalo: %v", err)
+		return
+	}
+
+	select {
+	case notify <- struct{}{}:
+	default:
 	}
 }
 
