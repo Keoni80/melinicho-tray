@@ -41,6 +41,7 @@ const (
 	stgWSTabStop        = 0x00010000
 	stgWSCaption        = 0x00C00000
 	stgWSSysMenu        = 0x00080000
+	stgWSExClientEdge   = 0x00000200
 	stgDefaultGuiFont   = 17
 	stgMBOkIconWarning  = 0x30
 )
@@ -164,9 +165,9 @@ func promptIntervalSeconds(current int) (int, bool) {
 	stgPSendMessage.Call(hLabel, stgWMSetFont, font, 1)
 
 	valuePtr, _ := windows.UTF16PtrFromString(strconv.Itoa(current))
-	hEdit, _, _ := ovPCreateWindowEx.Call(uintptr(stgWSBorder),
+	hEdit, _, _ := ovPCreateWindowEx.Call(uintptr(stgWSExClientEdge),
 		uintptr(unsafe.Pointer(strPtr("EDIT"))), uintptr(unsafe.Pointer(valuePtr)),
-		uintptr(stgWSChild|stgWSVisible|stgWSTabStop|stgESNumber|stgESAutoHScroll),
+		uintptr(stgWSChild|stgWSVisible|stgWSTabStop|stgWSBorder|stgESNumber|stgESAutoHScroll),
 		20, 44, 290, 24, hwndDlg, 0, hInstance, 0)
 	stgPSendMessage.Call(hEdit, stgWMSetFont, font, 1)
 
